@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Tic Tac Toe</title>
+</head>
+
+<body>
+    <div id="signUp">
+        <label>Enter your name</label>
+        <form id="postForm" method="POST">
+            <input id="nameInput" autocomplete="off" name="name" onkeydown="inputKeyDown(this)">
+        </form>
+        <button onclick="startGame()">
+            Start
+        </button>
+    </div>
+    <div id="inQueue" style="visibility: hidden;">
+        <label id="inQueueLabel">In Queue</label>
+    </div>
+</body>
+
+<style>
+    label,
+    input,
+    button {
+        margin-top: 1%;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        text-align: center;
+    }
+
+    label {
+        margin-top: 5%;
+    }
+</style>
+
+<script>
+    function startGame() {
+        var name = document.getElementById("nameInput").value.replace(';', '');
+        if (name == null || name.length < 1) {
+            return;
+        }
+        console.log("Signing up " + name);
+        document.getElementById("signUp").style.visibility = 'hidden';
+        var inQueueLabel = document.getElementById("inQueueLabel");
+        inQueueLabel.innerHTML = inQueueLabel.innerHTML + ", " + name + ".";
+        document.getElementById("inQueue").style.visibility = 'visible';
+        document.getElementById("nameInput").value = name;
+        var postForm = document.getElementById("postForm");
+        postForm.submit();
+    }
+
+    function inputKeyDown(element) {
+        if (event.key == 'Enter') {
+            event.preventDefault();
+            startGame();
+        }
+    }
+</script>
+
+</html>

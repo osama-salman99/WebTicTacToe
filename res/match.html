@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Tic Tac Toe</title>
+</head>
+
+<body>
+    <div style="font-size: xx-large; margin: 2%; ">
+        <label id="playerXLabel" style="float: left;">Player X:<br>Waiting...</label>
+        <label id="playerOLabel" style="float: right;">Player O<br>Waiting...</label>
+    </div>
+    <div>
+        <table>
+            <tr>
+                <td><button id="index_0" onclick="play(0)">-</button></td>
+                <td><button id="index_1" onclick="play(1)">-</button></td>
+                <td><button id="index_2" onclick="play(2)">-</button></td>
+            </tr>
+            <tr>
+                <td><button id="index_3" onclick="play(3)">-</button></td>
+                <td><button id="index_4" onclick="play(4)">-</button></td>
+                <td><button id="index_5" onclick="play(5)">-</button></td>
+            </tr>
+            <tr>
+                <td><button id="index_6" onclick="play(6)">-</button></td>
+                <td><button id="index_7" onclick="play(7)">-</button></td>
+                <td><button id="index_8" onclick="play(8)">-</button></td>
+            </tr>
+        </table>
+    </div>
+</body>
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    button {
+        color: transparent;
+        width: 100%;
+        height: 100%;
+        margin: 0%;
+        background-color: transparent;
+        display: block;
+        font-size: 80px;
+    }
+
+    button:hover {
+        cursor: pointer;
+    }
+
+    table,
+    td {
+        border: 1px solid black;
+        text-align: center;
+        margin-top: 3%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    table {
+        width: 30%;
+        border-collapse: collapse;
+    }
+
+    td {
+        width: 33.33%;
+        position: relative;
+    }
+
+    td:after {
+        display: block;
+        margin-top: 100%;
+    }
+
+    td.content {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: gold;
+    }
+</style>
+
+<script>
+    var assigned = null;
+    var ready = false;
+    assign();
+
+    function assign() {
+        var httpRequest = new XMLHttpRequest();
+        httpRequest.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                var response = httpRequest.responseText;
+                console.log("Response text: " + response);
+                var assignedSymbol = null;
+                var name = null;
+                var pairs = response.split(";");
+                pairs.forEach(pair => {
+                    pair = pair.split(":");
+                    if (pair.length == 2) {
+                        switch (pair[0]) {
+                            case "assign":
+                            assignedSymbol = pair[1];
+                                break;
+                            case "name":
+                                name = pair[1];
+                                break;
+                        }
+                    }
+                });
+                console.log(assignedSymbol);
+                console.log(name);
+                switch (assignedSymbol) {
+                    case "X":
+                        document.getElementById("playerXLabel").innerHTML = "Player X:<br>" + name;
+                        break;
+                    case "O":
+                        document.getElementById("playerOLabel").innerHTML = "Player O:<br>" + name;
+                        break;
+                    default:
+                        return;
+                }
+                assigned = assignedSymbol;
+                wait();
+            }
+        }
+        httpRequest.open("POST", "");
+        httpRequest.send("status=assign");
+    }
+
+    function wait() {
+        var httpRequest = new XMLHttpRequest();
+        httpRequest.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                var response = httpRequest.responseText;
+                console.log("Response text: " + response);
+                var waiting = null;
+                var name = null;
+                var pairs = response.split(";");
+                pairs.forEach(pair => {
+                    pair = pair.split(":");
+                    if (pair.length == 2) {
+                        switch (pair[0]) {
+                            case "waiting":
+                                waiting = pair[1];
+                                break;
+                            case "name":
+                                name = pair[1];
+                                break;
+                        }
+                    }
+                });
+                console.log(waiting);
+                console.log(name);
+                if (waiting == "wait") {
+                    setTimeout(wait, 1000);
+                } else if (waiting == "ready") {
+                    var otherPlayer;
+                    if (assigned == "X") {
+                        otherPlayer = "O";
+                    } else {
+                        otherPlayer = "X";
+                    }
+                    var id = "player" + otherPlayer + "Label";
+                    document.getElementById(id).innerHTML = "Player " + otherPlayer + ":<br>" + name;
+                    ready = true;
+                    enquireState();
+                }
+            }
+        }
+        httpRequest.open("POST", "");
+        httpRequest.send("status=waiting");
+    }
+
+    function play(index) {
+        if (!ready) {
+            return;
+        }
+        console.log(index);
+        var id = "index_" + index;
+        var httpRequest = new XMLHttpRequest();
+        httpRequest.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                var response = httpRequest.responseText;
+                console.log("Response text: " + response);
+                var pair = response.split(':');
+                if (pair.length != 2) {
+                    return;
+                }
+                if (pair[0] != "play") {
+                    return;
+                }
+                if (pair[1] == "accepted") {
+                    performMove(assigned, index);
+                }
+            }
+        }
+        httpRequest.open("POST", "");
+        httpRequest.send('status=play;index=' + index);
+    }
+
+    function enquireState() {
+        var httpRequest = new XMLHttpRequest();
+        httpRequest.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                var response = httpRequest.responseText;
+                console.log("Response text: " + response);
+                var enquire = null;
+                var lastMove = null;
+                var winner = null;
+                var pairs = response.split(";");
+                pairs.forEach(pair => {
+                    pair = pair.split(":");
+                    if (pair.length == 2) {
+                        switch (pair[0]) {
+                            case "enquire":
+                                enquire = pair[1];
+                                break;
+                            case "lastMove":
+                                lastMove = pair[1];
+                                break;
+                            case "winner":
+                                winner = pair[1];
+                                break;
+                        }
+                    }
+                });
+
+                if (lastMove != null && lastMove != "null") {
+                    var pair = lastMove.split('');
+                    var player = pair[0];
+                    var index = pair[1];
+                    performMove(player, index);
+
+                    if (enquire == "finished") {
+                        ready = false;
+                        var alert;
+                        if (winner == "draw") {
+                            alert = "It's a draw, BITCHES"
+                        } else {
+                            alert = winner + " is the WINNER!";
+                        }
+                        window.alert(alert);
+                        return;
+                    }
+                }
+                setTimeout(enquireState, 1000);
+            }
+        }
+        httpRequest.open("POST", "");
+        httpRequest.send('status=enquire');
+    }
+
+    function performMove(player, index) {
+        var id = "index_" + index;
+        var element = document.getElementById(id);
+        if (player == "X") {
+            element.style.color = "red";
+        } else {
+            element.style.color = "green";
+        }
+        element.innerHTML = player;
+    }
+</script>
+
+</html>
