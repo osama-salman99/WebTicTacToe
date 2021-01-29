@@ -19,13 +19,11 @@ public class HttpRequest {
     private final String path;
     private final String data;
     private final Map<String, String> pairs;
-    private final byte[] debug;
     private final OutputStream outputStream;
 
     public HttpRequest(Socket socket) throws EmptyRequestException {
         inetAddress = socket.getInetAddress();
         byte[] data = new byte[65536];
-        debug = data;
         int length;
         try {
             length = socket.getInputStream().read(data);
@@ -92,10 +90,6 @@ public class HttpRequest {
         } catch (IOException exception) {
             throw new RuntimeException(exception);
         }
-    }
-
-    public void debug() {
-        System.out.println(new String(debug));
     }
 
     @Override
